@@ -116,7 +116,7 @@ const Appointments = () => {
                     <span className="badge bg-secondary">{a.status}</span>
                   </td>
                   <td>
-                    {user?.role === "Doctor" && a.status === "Pending" && (
+                    {user?.role === "Doctor" && a.status === "Pending" &&  (
                       <>
                         <button
                           className="btn btn-success btn-sm me-2"
@@ -139,7 +139,7 @@ const Appointments = () => {
                       </>
                     )}
 
-                    {user?.role !== "Doctor" && a.status === "Pending" && (
+                    {user?.role !== "Doctor" && a.status === "Pending" &&  (
                       <button
                         className="btn btn-danger btn-sm"
                         onClick={() => removeAppointment(a._id)}

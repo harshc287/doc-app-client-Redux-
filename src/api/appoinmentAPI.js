@@ -22,5 +22,5 @@ export const updateAppointment  =(id, data) => {
     return axiosInstance.put(`/appointment/update/${id}`, data);}
 
 export const deleteAppointment = (id) => {
-  return axiosInstance.delete(`/appointment/deleteAppointment/${id}`);
+  return axiosInstance.delete(`/appointment/delete/${id}`);
 };

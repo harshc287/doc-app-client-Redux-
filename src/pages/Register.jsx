@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { registerUser } from "../api/userAPI";
+import { useDispatch, useSelector } from "react-redux";
+import { registerUserThunk, resetRegisterState } from "../auth/authSlice";
 import {
   FaUser,
   FaEnvelope,
@@ -11,45 +12,44 @@ import {
 } from "react-icons/fa";
 
 const Register = () => {
+  const dispatch = useDispatch()
+  const {loading, error, success} = useSelector((state) => state.auth)
+
   const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    contactNumber: "",
-    address: "",
-  });
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  name: "",
+  email: "",
+  password: "",
+  contactNumber: "",
+  address: "",
+  })
+  
+
+
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit =  (e) => {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!formData.name || !formData.email || !formData.password || !formData.contactNumber) {
-      setError("Please fill in all required fields");
+      alert("Please fill in all required fields");
       return;
     }
 
-    try {
-      setLoading(true);
-      const res = await registerUser(formData);
-      if (res.data.success) {
-        setSuccess("Registration successful! Redirecting to login...");
-        setTimeout(() => navigate("/"), 2000);
-      }
-    } catch (err) {
-      setError(err.response?.data?.msg || "Registration failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+      dispatch(registerUserThunk(formData));
   };
+
+  useEffect(()=>{
+    if(success){
+      setTimeout(()=>{navigate("/")
+
+      }, 2000)
+    }
+  }, [success, navigate])
 
   return (
     <div className="register-page">

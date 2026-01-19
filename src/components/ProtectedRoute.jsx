@@ -1,10 +1,18 @@
+import { useSelector } from "react-redux";
 import { Navigate, Outlet } from "react-router-dom";
 
 const ProtectedRoute = () => {
-  const token = localStorage.getItem("token");
+  const auth = useSelector((state) => state.auth);
 
-  // ❌ Not logged in
-  if (!token) {
+  // ⛔ If redux state is not ready
+  if (!auth) {
+    return <Navigate to="/" replace />;
+  }
+
+  const isAuthenticated = auth.isAuthenticated;
+
+  // ⛔ Not logged in
+  if (!isAuthenticated) {
     return <Navigate to="/" replace />;
   }
 

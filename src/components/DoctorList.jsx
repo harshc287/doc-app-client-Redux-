@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { getAllDoctors } from "../api/doctorAPI";
+import { getAllDoctors, updateDoctorStatus, deleteDoctor } from "../api/doctorAPI";
+import { getLoggedUser } from "../api/userAPI";
 import {
   FaUserMd,
   FaStethoscope,
@@ -9,16 +10,22 @@ import {
   FaStar,
 } from "react-icons/fa";
 
-
 const DoctorList = () => {
   const [doctors, setDoctors] = useState([]);
+  const [user, setUser] = useState(null); // 🔹 added
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
 
   useEffect(() => {
     fetchDoctors();
+    fetchUser(); // 🔹 added
   }, []);
+
+  const fetchUser = async () => {
+    const res = await getLoggedUser();
+    if (res.data.success) setUser(res.data.user);
+  };
 
   const fetchDoctors = async () => {
     try {
@@ -34,14 +41,52 @@ const DoctorList = () => {
     }
   };
 
+  // 🔹 added
+  const handleStatusChange = async (doctorId, status) => {
+    try {
+      await updateDoctorStatus(doctorId, status);
+
+      // refresh doctor list
+      fetchDoctors();
+
+      // 🔥 refresh logged-in user data
+      if (status === "Accepted" || status === "Rejected") {
+        window.dispatchEvent(new Event("user-updated"));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+
+  //delete doctor
+  const handleDeleteDoctor = async (doctorId) => {
+    if (!window.confirm("Delete this doctor?")) return;
+
+    try {
+      await deleteDoctor(doctorId);
+      fetchDoctors(); // refresh list
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
   const specialties = ["all", ...new Set(doctors.map(d => d.specialist).filter(Boolean))];
 
   const filteredDoctors = doctors.filter((doctor) => {
     const matchesSearch =
-      doctor.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.createdBy?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialist?.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesSpecialty =
       specialtyFilter === "all" || doctor.specialist === specialtyFilter;
+
+    // 🔹 non-admins see only accepted doctors
+    if (user?.role !== "Admin" && doctor.status !== "Accepted") {
+      return false;
+    }
+
     return matchesSearch && matchesSpecialty;
   });
 
@@ -60,7 +105,7 @@ const DoctorList = () => {
       <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
         <div>
           <h3 className="page-title">👨‍⚕️ Medical Professionals</h3>
-          <p className="text-muted">Find and connect with certified doctors</p>
+          <p className="text-secondary">Find and connect with certified doctors</p>
         </div>
         <span className="text-muted small">
           {filteredDoctors.length} doctors available
@@ -120,74 +165,96 @@ const DoctorList = () => {
           {filteredDoctors.map((doctor) => (
             <div key={doctor._id} className="col-md-6 col-lg-4">
               <div className="doctor-card">
+
                 {/* Header */}
                 <div className="d-flex gap-3 mb-4">
                   <div className="avatar">
-                    {doctor.user?.name?.charAt(0) || "D"}
+                    {doctor.createdBy?.name?.charAt(0) || "D"}
                   </div>
                   <div>
                     <h5 className="doctor-name">
-                      Dr. {doctor.user?.name}
+                      Dr. {doctor.createdBy?.name}
                     </h5>
                     <span className="badge specialty-badge">
                       <FaStethoscope className="me-1" />
                       {doctor.specialist || "General Physician"}
                     </span>
+
                   </div>
+
                 </div>
+                <span
+                  className={`badge mt-2 ${doctor.status === "Accepted"
+                    ? "bg-success"
+                    : doctor.status === "Rejected"
+                      ? "bg-danger"
+                      : "bg-warning"
+                    }`}
+                >
+                  {doctor.status}
+                </span>
 
                 {/* Info */}
                 <div className="info-list">
                   <Info icon={<FaMoneyBillWave />} label="Consultation Fee" value={`₹${doctor.fees}`} />
-                  <Info icon={<FaEnvelope />} label="Email" value={doctor.user?.email} />
-                  {doctor.user?.contactNumber && (
-                    <Info icon={<FaPhone />} label="Contact" value={doctor.user.contactNumber} />
+                  <Info icon={<FaEnvelope />} label="Email" value={doctor.createdBy?.email} />
+                  {doctor.createdBy?.contactNumber && (
+                    <Info icon={<FaPhone />} label="Contact" value={doctor.createdBy.contactNumber} />
                   )}
-                  <div className="info-item">
-                    <FaStar className="text-warning" />
-                    <div>
-                      <small>Rating</small>
-                      <div className="rating">
-                        {[1,2,3,4,5].map((s) => (
-                          <FaStar key={s} className={s <= 4 ? "text-warning" : "text-secondary"} />
-                        ))}
-                        <span>4.8</span>
-                      </div>
-                    </div>
-                  </div>
                 </div>
 
-                {/* Actions */}
+                {/* Actions (UI SAME, LOGIC CHANGED) */}
                 <div className="card-actions">
-                  <button className="btn btn-primary w-100">
-                    Book Appointment
-                  </button>
-                  <button className="btn btn-secondary">
-                    View Profile
-                  </button>
+
+                  {/* 🔹 ADMIN - PENDING */}
+                  {user?.role === "Admin" && doctor.status === "Pending" && (
+                    <>
+                      <button
+                        className="btn btn-success w-100"
+                        onClick={() => handleStatusChange(doctor._id, "Accepted")}
+                      >
+                        Accept
+                      </button>
+
+                      <button
+                        className="btn btn-danger w-100"
+                        onClick={() => handleStatusChange(doctor._id, "Rejected")}
+                      >
+                        Reject
+                      </button>
+                    </>
+                  )}
+
+                  {/* 🔹 ADMIN - AFTER REVIEW */}
+                  {user?.role === "Admin" && doctor.status !== "Pending" && (
+                    <button
+                      className="btn btn-outline-danger w-100"
+                      onClick={() => handleDeleteDoctor(doctor._id)}
+                    >
+                      Delete Doctor
+                    </button>
+                  )}
+
+                  {/* 🔹 USER */}
+                  {user?.role !== "Admin" && doctor.status === "Accepted" && (
+                    <>
+                      <button className="btn btn-primary w-100">
+                        Book Appointment
+                      </button>
+                      <button className="btn btn-secondary">
+                        View Profile
+                      </button>
+                    </>
+                  )}
+
                 </div>
+
+
               </div>
             </div>
           ))}
         </div>
       )}
-
-      {/* Footer Stats */}
-      <div className="glass-card mt-5">
-        <div className="row text-center">
-          <Stat value={doctors.length} label="Total Doctors" />
-          <Stat value={specialties.length - 1} label="Specialties" />
-          <Stat
-            value={
-              Math.floor(
-                doctors.reduce((a, d) => a + d.fees, 0) / doctors.length
-              ) || 0
-            }
-            label="Avg. Fee"
-          />
-          <Stat value="24/7" label="Availability" />
-        </div>
-      </div>
     </div>
   );
 };
@@ -199,13 +266,6 @@ const Info = ({ icon, label, value }) => (
       <small>{label}</small>
       <p>{value}</p>
     </div>
-  </div>
-);
-
-const Stat = ({ value, label }) => (
-  <div className="col-md-3">
-    <h4>{value}</h4>
-    <small>{label}</small>
   </div>
 );
 

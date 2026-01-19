@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { applyDoctor } from "../api/doctorAPI";
+import React, { useEffect, useState } from "react";
+import { applyDoctor, getDoctorInfo } from "../api/doctorAPI";
 import { FaStethoscope } from "react-icons/fa";
 
 const ApplyDoctor = () => {
@@ -7,6 +7,23 @@ const ApplyDoctor = () => {
   const [fees, setFees] = useState("");
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  // 🔹 CHECK EXISTING APPLICATION STATUS
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const res = await getDoctorInfo();
+        if (res.data.success && res.data.doctor.status === "Pending") {
+          setMsg("Your doctor application is under review");
+          setIsPending(true);
+        }
+      } catch (err) {
+        // no doctor profile yet → allow apply
+      }
+    };
+    checkStatus();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,7 +32,10 @@ const ApplyDoctor = () => {
     try {
       setLoading(true);
       const res = await applyDoctor({ specialist, fees });
-      if (res.data.success) setMsg("Application submitted successfully!");
+      if (res.data.success) {
+        setMsg("Application submitted successfully!");
+        setIsPending(true);
+      }
     } catch {
       setMsg("Application failed");
     } finally {
@@ -28,9 +48,7 @@ const ApplyDoctor = () => {
       <div className="text-center mb-4">
         <FaStethoscope size={50} className="text-primary" />
         <h3 className="mt-3 text-info">Apply as Doctor</h3>
-        <p className="text-info">
-          Join our healthcare professionals
-        </p>
+        <p className="text-info">Join our healthcare professionals</p>
       </div>
 
       {msg && <div className="alert alert-success-soft">{msg}</div>}
@@ -43,6 +61,7 @@ const ApplyDoctor = () => {
             className="form-control form-control-dark"
             value={specialist}
             onChange={(e) => setSpecialist(e.target.value)}
+            disabled={isPending}
           />
         </div>
 
@@ -53,12 +72,13 @@ const ApplyDoctor = () => {
             className="form-control form-control-dark"
             value={fees}
             onChange={(e) => setFees(e.target.value)}
+            disabled={isPending}
           />
         </div>
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || isPending}
           className="btn btn-gradient-indigo w-100 py-3"
         >
           {loading ? "Submitting..." : "Submit Application"}

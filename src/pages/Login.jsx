@@ -1,37 +1,34 @@
-
-
-
-import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import{loginUserThunk } from "../auth/authSlice"
+import React, { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { loginUser } from "../api/userAPI";
 import { FaSignInAlt, FaEnvelope, FaLock, FaHospital } from "react-icons/fa";
 
 
 
 const Login = () => {
+
+  const dispatch = useDispatch()
+  const {loading, error, isAuthenticated } = useSelector(
+    (state) => state.auth
+  )
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    dispatch(loginUserThunk({email, password}))
 
-    try {
-      setLoading(true);
-      const res = await loginUser({ email, password });
-      if (res.data.success) {
-        localStorage.setItem("token", res.data.token);
-        navigate("/dashboard");
-      }
-    } catch (err) {
-      setError(err.response?.data?.msg || "Login failed");
-    } finally {
-      setLoading(false);
-    }
   };
+
+  useEffect(() => {
+    if(isAuthenticated){
+      navigate("/dashboard", {replace: true})
+    }
+  }, [isAuthenticated, navigate])
 
   return (
     <div className="login-wrapper d-flex align-items-center justify-content-center">

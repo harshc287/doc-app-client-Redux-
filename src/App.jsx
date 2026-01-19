@@ -1,33 +1,4 @@
-// import { useState } from 'react'
 
-// import './App.css'
-// import { BrowserRouter, Route, Routes } from 'react-router-dom'
-// import Login from './pages/Login'
-// import Register from './pages/Register'
-// import Dashboard from './pages/Dashboard'
-// import ProtectedRoute from './components/ProtectedRoute'
-
-// function App() {
-  
-
-//   return (
-// <>
-//     <BrowserRouter>
-//     <Routes>
-//       <Route path='/' element ={<Login/>}/>
-//       <Route path='/register' element = {<Register/>}/>
-//          <Route element={<ProtectedRoute />}>
-//           <Route path="/dashboard" element={<Dashboard />} />
-//         </Route>
-
-     
-//     </Routes>
-//     </BrowserRouter>
-// </>
-//   )
-// }
-
-// export default App
 
 
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -48,10 +19,11 @@ const router = createBrowserRouter([
     element: <Register />,
   },
   {
+    path: '/dashboard',
     element: <ProtectedRoute />,
     children: [
       {
-        path: '/dashboard/*',
+        path: "",
         element: <Dashboard />,
       },
     ],
