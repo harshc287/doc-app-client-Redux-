@@ -52,7 +52,7 @@ const Dashboard = () => {
   const renderContent = () => {
     switch (activePage) {
       case "dashboard":
-        return <DashboardHome user={user} />;
+        return <DashboardHome user={user} setActivePage = {setActivePage}/>;
       case "profile":
         return <Profile user={user} />;
       case "appointments":

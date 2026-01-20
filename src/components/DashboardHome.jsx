@@ -8,7 +8,7 @@ import {
 } from "react-icons/fa";
 import { getDashboardStats } from "../api/dashboardAPI";
 
-const DashboardHome = ({ user }) => {
+const DashboardHome = ({ user, setActivePage }) => {
   const [stats, setStats] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]);
 
@@ -44,7 +44,7 @@ const DashboardHome = ({ user }) => {
             },
           ]);
 
-          setRecentActivities(res.data.recentActivities);
+          setRecentActivities(res.data.recentActivities || []);
         }
       } catch (error) {
         console.error("Dashboard fetch failed", error);
@@ -54,17 +54,30 @@ const DashboardHome = ({ user }) => {
     fetchDashboard();
   }, []);
 
+  // 🔹 QUICK ACTIONS (NO ROUTER PATHS)
   const quickActions = [
-    { label: "Book Appointment", icon: <FaCalendarCheck />, page: "create-appointment" },
-    { label: "View Schedule", icon: <FaClock />, page: "appointments" },
-    { label: "Update Profile", icon: <FaUserMd />, page: "profile" },
+    {
+      label: "Book Appointment",
+      icon: <FaCalendarCheck />,
+      action: () => setActivePage("create-appointment"),
+    },
+    {
+      label: "View Schedule",
+      icon: <FaClock />,
+      action: () => setActivePage("appointments"),
+    },
+    {
+      label: "Update Profile",
+      icon: <FaUserMd />,
+      action: () => setActivePage("profile"),
+    },
   ];
 
   if (user?.role === "Doctor") {
     quickActions.push({
       label: "My Patients",
       icon: <FaUsers />,
-      page: "appointments",
+      action: () => setActivePage("appointments"),
     });
   }
 
@@ -114,7 +127,10 @@ const DashboardHome = ({ user }) => {
         <div className="row g-3">
           {quickActions.map((action, index) => (
             <div key={index} className="col-12 col-sm-6 col-lg-4">
-              <button className="quick-action-btn w-100">
+              <button
+                className="quick-action-btn w-100"
+                onClick={action.action}
+              >
                 <span className="action-icon">{action.icon}</span>
                 <span>{action.label}</span>
               </button>
