@@ -16,6 +16,7 @@ const DoctorList = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [specialtyFilter, setSpecialtyFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("name-asc");
 
   useEffect(() => {
     fetchDoctors();
@@ -88,6 +89,22 @@ const DoctorList = () => {
     }
 
     return matchesSearch && matchesSpecialty;
+  })
+
+  .sort((a, b) => {
+    if (sortBy === "name-asc") {
+      return a.createdBy?.name.localeCompare(b.createdBy?.name);
+    }
+
+    if (sortBy === "fee-low") {
+      return a.fees - b.fees;
+    }
+
+    if (sortBy === "fee-high") {
+      return b.fees - a.fees;
+    }
+
+    return 0;
   });
 
   if (loading) {
@@ -143,14 +160,18 @@ const DoctorList = () => {
 
           <div className="col-md-4">
             <label className="form-label">Sort By</label>
-            <select className="form-select dark-input">
-              <option>Name (A-Z)</option>
-              <option>Experience</option>
-              <option>Fees (Low to High)</option>
-              <option>Fees (High to Low)</option>
+            <select
+              className="form-select dark-input"
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+            >
+              <option value="name-asc">Name (A–Z)</option>
+              <option value="fee-low">Fees (Low to High)</option>
+              <option value="fee-high">Fees (High to Low)</option>
             </select>
           </div>
         </div>
+
       </div>
 
       {/* Doctors */}

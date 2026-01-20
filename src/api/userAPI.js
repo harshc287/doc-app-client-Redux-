@@ -32,4 +32,7 @@ export const getAllUsers = () => {
   return axiosInstance.get("/user/getAllUsers");
 };
 
+export const updateUserProfile = (data) => {
+  return axiosInstance.patch("/user/updateProfile", data);
+};
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { applyDoctor, getDoctorInfo } from "../api/doctorAPI";
+import { applyDoctor, getDoctorApplicationStatus } from "../api/doctorAPI";
 import { FaStethoscope } from "react-icons/fa";
 
 const ApplyDoctor = () => {
@@ -13,7 +13,7 @@ const ApplyDoctor = () => {
   useEffect(() => {
     const checkStatus = async () => {
       try {
-        const res = await getDoctorInfo();
+        const res = await getDoctorApplicationStatus();
         if (res.data.success && res.data.doctor.status === "Pending") {
           setMsg("Your doctor application is under review");
           setIsPending(true);

@@ -39,3 +39,7 @@ export const updateDoctorStatus = (doctorId, status) => {
 export const deleteDoctor = (doctorId) => {
   return axiosInstance.delete(`/doctor/deleteDoctor/${doctorId}`);
 };
+
+export const getDoctorApplicationStatus = () => {
+  return axiosInstance.get("/doctor/application-status");
+};
